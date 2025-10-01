@@ -1,22 +1,26 @@
 import { Heart } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useBLEProximity } from "@/hooks/useBLEProximity";
+import { ChimePlayer } from "@/utils/audioUtils";
 
 const Index = () => {
-  const [nearbyCount, setNearbyCount] = useState(0);
-  const alarmSoundRef = useRef<HTMLAudioElement | null>(null);
+  const { detectedUsers, nearbyCount } = useBLEProximity();
+  const chimePlayerRef = useRef<ChimePlayer | null>(null);
   const hasPlayedAlarmRef = useRef(false);
 
+  // Initialize chime player
   useEffect(() => {
-    // Simulate detection for demo - replace with actual detection logic
-    const timer = setTimeout(() => {
-      setNearbyCount(1);
-    }, 3000);
-    return () => clearTimeout(timer);
+    const player = new ChimePlayer();
+    player.initialize();
+    chimePlayerRef.current = player;
+    
+    return () => player.cleanup();
   }, []);
 
+  // Play chime when users detected
   useEffect(() => {
     if (nearbyCount > 0 && !hasPlayedAlarmRef.current) {
-      alarmSoundRef.current?.play();
+      chimePlayerRef.current?.play();
       hasPlayedAlarmRef.current = true;
     } else if (nearbyCount === 0) {
       hasPlayedAlarmRef.current = false;
@@ -29,9 +33,24 @@ const Index = () => {
     return "nearby people";
   };
 
+  // Calculate position on radar circle for detected users
+  const getRadarDotPosition = (angle: number, distance: number) => {
+    // Convert angle to radians
+    const rad = (angle * Math.PI) / 180;
+    
+    // Calculate position on a circle
+    // Distance goes from center (0) to edge of outermost circle (200px on desktop, 160px on mobile)
+    const maxRadius = window.innerWidth < 640 ? 160 : 200;
+    const radius = distance * maxRadius;
+    
+    const x = Math.cos(rad) * radius;
+    const y = Math.sin(rad) * radius;
+    
+    return { x, y };
+  };
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#00D9DD] via-[#4DD9DB] via-40% to-[#FFD0E0] to-70% flex flex-col items-center justify-between">
-      <audio ref={alarmSoundRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiDcIGWi68ee2cSYIJH3N8t2NQAwSXrTp7KlUFAxJouD1xHQoCD6T2fPJdSkGLYLO89iHNQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQ0UXrTp66hVFApGn+DyvmwhBSyAzvLZiDcIGWi78ee2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt559NEAtMqOH2tnMhBi+J0/TSgTIICll/w+m6hD0JIGzB6t2XSQwUXrTp66hVFApGn+DyvmshBSx/zvLZhzcHGGi78ue2cSYGJH3O8t2NQAwSXbTp7KlUFAxJouD1xHQoCD6R2fTKdCkGLYHO89mINQgZaLvt55" preload="auto" />
       {/* Header */}
       <header className="pt-12 sm:pt-16">
         <h1 className="text-[32px] sm:text-[36px] font-thin text-white/85 tracking-wide">
@@ -60,10 +79,20 @@ const Index = () => {
         {/* Inner ripple circle */}
         <div className="absolute w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] rounded-full border-[5px] border-cyan-400/50 animate-ripple-delayed-2" />
 
-        {/* Radar detection dot - shows when users detected */}
-        {nearbyCount > 0 && (
-          <div className="absolute top-8 right-8 w-4 h-4 bg-red-500 rounded-full shadow-lg shadow-red-500/50 animate-blink-radar" />
-        )}
+        {/* Radar detection dots - positioned on concentric circles */}
+        {detectedUsers.map((user) => {
+          const pos = getRadarDotPosition(user.angle, user.distance);
+          return (
+            <div
+              key={user.id}
+              className="absolute w-4 h-4 bg-red-500 rounded-full shadow-lg shadow-red-500/50 animate-blink-radar transition-all duration-500"
+              style={{
+                left: `calc(50% + ${pos.x}px - 8px)`,
+                top: `calc(50% + ${pos.y}px - 8px)`,
+              }}
+            />
+          );
+        })}
 
         {/* Center heart */}
         <div className="relative z-10 flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-[#FF6B9D] to-[#FF8FB3] shadow-lg shadow-pink-300/40 animate-pulse-soft">
